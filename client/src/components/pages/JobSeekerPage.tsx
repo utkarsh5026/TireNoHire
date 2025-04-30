@@ -273,7 +273,7 @@ export const JobSeekerPage: React.FC = () => {
   const canProceedToAnalysis = jobDescription?.status === "ready";
 
   return (
-    <div className="container mx-auto max-w-7xl py-8 px-4">
+    <div className="container mx-auto max-w-7xl py-8 px-4 font-source-code-pro">
       <div className="mb-12">
         <ProgressIndicator
           steps={steps}

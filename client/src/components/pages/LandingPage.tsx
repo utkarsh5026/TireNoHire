@@ -23,7 +23,7 @@ export const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col font-mono">
       <div className="flex-1">
         <section className="relative py-20 px-4 overflow-hidden">
           {/* Background decoration */}
