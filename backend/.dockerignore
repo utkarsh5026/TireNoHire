@@ -1,0 +1,22 @@
+# backend/.dockerignore
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.env
+.venv
+env/
+venv/
+ENV/
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.idea/
+.vscode/
+*.log
+.git
+.github
+.DS_Store
+uploads/

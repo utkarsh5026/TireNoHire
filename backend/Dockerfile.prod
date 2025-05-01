@@ -1,0 +1,31 @@
+# backend/Dockerfile.prod
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install Poetry
+RUN pip install poetry
+
+# Copy Poetry configuration
+COPY pyproject.toml poetry.lock* ./
+
+# Configure Poetry to not use a virtual environment in Docker
+RUN poetry config virtualenvs.create false
+
+# Install only production dependencies
+RUN poetry install --no-interaction --no-ansi --no-dev
+
+# Copy the application code
+COPY . .
+
+# Create a non-root user to run the application
+RUN adduser --disabled-password --gecos "" appuser
+USER appuser
+
+# Expose the FastAPI port
+EXPOSE 8000
+
+# Start the production server with proper workers
+# Use Gunicorn with Uvicorn workers as recommended for production
+CMD ["gunicorn", "app.main:app", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]
+

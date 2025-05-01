@@ -1,0 +1,25 @@
+# backend/Dockerfile.dev
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install Poetry
+RUN pip install poetry
+
+# Copy Poetry configuration
+COPY pyproject.toml poetry.lock* ./
+
+# Configure Poetry to not use a virtual environment in Docker
+RUN poetry config virtualenvs.create false
+
+# Install dependencies
+RUN poetry install --no-interaction --no-ansi --no-root
+
+# Copy the application code
+COPY . .
+
+# Expose the FastAPI port
+EXPOSE 8000
+
+# Start the development server with hot reload
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
