@@ -76,7 +76,7 @@ export interface JobDescription {
     period?: "hourly" | "monthly" | "yearly";
   };
   createdAt: Date;
-  source: "text" | "link";
+  source: "text" | "link" | "file";
   sourceUrl?: string;
   status: "processing" | "ready" | "error";
   error?: string;
