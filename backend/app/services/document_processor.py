@@ -3,6 +3,7 @@ import requests
 import PyPDF2
 import docx
 from fastapi import UploadFile, HTTPException
+from .job_description_extractor import JobDescriptionExtractor
 
 
 class DocumentProcessor:
@@ -65,8 +66,8 @@ class DocumentProcessor:
                 return DocumentProcessor._extract_from_docx(content)
             else:
                 # For web pages, you could use BeautifulSoup to extract text
-                raise HTTPException(
-                    status_code=400, detail="URL does not point to a supported document type")
+                extractor = JobDescriptionExtractor()
+                return await extractor.extract_from_url(url)
         except requests.RequestException as e:
             raise HTTPException(
                 status_code=500, detail=f"Error fetching document from URL: {str(e)}")

@@ -18,6 +18,8 @@ uvicorn = "^0.34.2"
 langchain-community = "^0.3.23"
 langchain-openai = "^0.3.14"
 python-multipart = "^0.0.20"
+beautifulsoup4 = "^4.13.4"
+trafilatura = "^2.0.0"
 
 
 [tool.poetry.group.dev.dependencies]

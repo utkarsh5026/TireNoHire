@@ -3,7 +3,7 @@ import pytest
 import io
 import time
 from fastapi.testclient import TestClient
-from app.main import app
+main import app
 
 
 def test_complete_job_seeker_flow(client, mock_language_model_service, sample_resume_text_1, sample_job_text_1):

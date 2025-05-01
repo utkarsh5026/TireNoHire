@@ -1,7 +1,7 @@
 import pytest
 import io
 from fastapi import UploadFile, HTTPException
-from app.services.document_processor import DocumentProcessor
+services.document_processor import DocumentProcessor
 
 
 @pytest.mark.asyncio

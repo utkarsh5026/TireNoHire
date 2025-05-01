@@ -6,11 +6,11 @@ import uuid
 from datetime import datetime
 import json
 
-from app.main import app
-from app.models import Resume, Job, MatchAnalysis
-from app.api.resumes import resumes_db
-from app.api.jobs import jobs_db
-from app.api.matches import matches_db
+main import app
+models import Resume, Job, MatchAnalysis
+api.resumes import resumes_db
+api.jobs import jobs_db
+api.matches import matches_db
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "test_data")
 
@@ -313,7 +313,7 @@ def mock_language_model_service(monkeypatch):
             # Add the required IDs
             data["resume_id"] = str(args[0]["id"])
             data["job_id"] = str(args[1]["id"])
-            from app.models.match import (
+            models.match import (
                 MatchAnalysis, SkillMatch, ExperienceMatch,
                 EducationMatch, KeywordMatch, SectionScore,
                 ImprovementSuggestion
@@ -422,7 +422,7 @@ def mock_language_model_service(monkeypatch):
         }, f)
 
     # Apply monkeypatches
-    from app.services.language_model import LanguageModelService
+    services.language_model import LanguageModelService
     monkeypatch.setattr(LanguageModelService,
                         "extract_resume_details", mock_extract_resume_details)
     monkeypatch.setattr(LanguageModelService,

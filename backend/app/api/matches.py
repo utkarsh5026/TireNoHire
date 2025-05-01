@@ -2,10 +2,10 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from typing import List, Optional
 from uuid import UUID
-from app.models.match import MatchAnalysisCreate, MatchAnalysis
-from app.services.match_analyzer import MatchAnalyzer
-from app.api.resumes import resumes_db
-from app.api.jobs import jobs_db
+from models.match import MatchAnalysisCreate, MatchAnalysis
+from services.match_analyzer import MatchAnalyzer
+from api.resumes import resumes_db
+from api.jobs import jobs_db
 
 router = APIRouter()
 

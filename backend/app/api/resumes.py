@@ -2,9 +2,9 @@
 from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, BackgroundTasks
 from typing import List, Optional
 from uuid import UUID
-from app.models.resume import ResumeCreate, Resume, ResumeUploadResponse
-from app.services.document_processor import DocumentProcessor
-from app.services.language_model import LanguageModelService
+from models.resume import ResumeCreate, Resume, ResumeUploadResponse
+from services.document_processor import DocumentProcessor
+from services.language_model import LanguageModelService
 
 router = APIRouter()
 

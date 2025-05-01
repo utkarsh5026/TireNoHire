@@ -5,8 +5,8 @@ from typing import Dict, Any
 import json
 from uuid import uuid4
 from fastapi import HTTPException
-from app.core.config import settings
-from app.models.match import (
+from core.config import settings
+from models.match import (
     SkillMatch, ExperienceMatch, EducationMatch, KeywordMatch,
     SectionScore, ImprovementSuggestion, MatchAnalysis
 )
@@ -16,7 +16,7 @@ class LanguageModelService:
     def __init__(self):
         self.llm = ChatOpenAI(
             api_key=settings.OPENAI_API_KEY,
-            model_name="gpt-4-turbo",  # Can be configured based on needs
+            model_name="gpt-4o-mini",  # Can be configured based on needs
             temperature=0.2  # Lower temperature for more consistent outputs
         )
 

@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from typing import List, Optional
 from uuid import UUID
-from app.models import JobCreate, Job
-from app.services.document_processor import DocumentProcessor
-from app.services.language_model import LanguageModelService
+from models import JobCreate, Job
+from services.document_processor import DocumentProcessor
+from services.language_model import LanguageModelService
 
 router = APIRouter()
 
@@ -46,7 +46,6 @@ async def create_job(job_create: JobCreate, background_tasks: BackgroundTasks):
                 job.status = "ready"
                 jobs_db[job.id] = job
             except Exception as e:
-                # Update with error status
                 job.status = "error"
                 job.error = str(e)
                 jobs_db[job.id] = job
@@ -74,3 +73,48 @@ async def get_job(job_id: UUID):
 async def list_jobs():
     """List all jobs"""
     return list(jobs_db.values())
+
+
+@router.post("/from-url")
+async def create_job_from_url(url: str, background_tasks: BackgroundTasks):
+    """Create a job description directly from a URL"""
+    try:
+        # Create a job processor
+        doc_processor = DocumentProcessor()
+        text_content = await doc_processor.extract_text_from_url(url)
+
+        language_model = LanguageModelService()
+        parsed_data = await language_model.extract_job_details(text_content)
+
+        # Create a job with "processing" status initially
+        # job = Job(
+        #     title=job_details.get("title", "Job Position"),
+        #     description=job_details.get("description", ""),
+        #     requirements=job_details.get(
+        #         "skills", []) + job_details.get("required_qualifications", []),
+        #     responsibilities=job_details.get("responsibilities", []),
+        #     preferred_qualifications=job_details.get(
+        #         "preferred_qualifications", []),
+        #     benefits=job_details.get("benefits", []),
+        #     source="link",
+        #     source_url=url,
+        #     status="processing"
+        # )
+
+        # Store the job
+        # jobs_db[job.id] = job
+
+        # # Update the job status to ready in the background
+        # def mark_job_ready():
+        #     job.status = "ready"
+        #     jobs_db[job.id] = job
+
+        # background_tasks.add_task(mark_job_ready)
+
+        return parsed_data
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error creating job from URL: {str(e)}"
+        )

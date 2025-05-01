@@ -2,8 +2,8 @@
 import pytest
 import json
 from uuid import UUID
-from app.services.language_model import LanguageModelService
-from app.models.match import MatchAnalysis
+services.language_model import LanguageModelService
+models.match import MatchAnalysis
 
 
 @pytest.mark.asyncio
