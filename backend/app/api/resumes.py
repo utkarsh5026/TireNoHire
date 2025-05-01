@@ -1,4 +1,3 @@
-# app/api/endpoints/resumes.py
 from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, BackgroundTasks
 from typing import List, Optional
 from uuid import UUID

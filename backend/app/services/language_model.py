@@ -1,4 +1,4 @@
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain.chains import LLMChain
 from typing import Dict, Any
@@ -25,18 +25,28 @@ class LanguageModelService:
         prompt_template = """
         You are an expert at analyzing job descriptions. Extract the following information from the job description below:
         
-        1. Job title
-        2. Required skills (as a list)
-        3. Job responsibilities (as a list)
-        4. Required qualifications (as a list)
-        5. Preferred qualifications (as a list, or empty if none)
-        6. Benefits (as a list, or empty if none)
+        1. Company name
+        2. Job title
+        3. Required skills (as a list of specific technical and soft skills)
+        4. Job responsibilities (as a list of specific duties)
+        5. Required qualifications (as a list including education, experience, certifications)
+        6. Preferred qualifications (as a list, or empty if none)
+        7. Benefits (as a list, or empty if none)
+        8. Location (remote, hybrid, or specific location)
+        9. Employment type (full-time, part-time, contract, etc.)
+        10. Seniority level (entry, mid, senior, etc.)
         
         Job Description:
         {job_description}
         
         Provide your response as a valid JSON object with the following keys: 
-        "title", "skills", "responsibilities", "required_qualifications", "preferred_qualifications", "benefits"
+        "company", "title", "skills", "responsibilities", "required_qualifications", "preferred_qualifications", 
+        "benefits", "location", "employment_type", "seniority_level"
+
+        For any fields where information is not explicitly provided in the job description, make a reasonable inference 
+        based on context or use "Not specified" for string values and empty arrays for list values.
+        
+        Return ONLY the JSON object with no additional text, explanations, or markdown formatting.
         """
 
         prompt = PromptTemplate(
@@ -44,21 +54,11 @@ class LanguageModelService:
             input_variables=["job_description"]
         )
 
-        chain = LLMChain(llm=self.llm, prompt=prompt)
-        result = await chain.arun(job_description=job_description)
+        chain = prompt | self.llm
+        result = await chain.ainvoke({"job_description": job_description})
+        print(f"result: {result}")
 
-        try:
-            return json.loads(result)
-        except json.JSONDecodeError:
-            # Handle case where LLM doesn't return proper JSON
-            extraction_prompt = f"""
-            The following text should be converted to a valid JSON object:
-            {result}
-            
-            Please extract and return ONLY the valid JSON object.
-            """
-            extraction_result = await self.llm.apredict(extraction_prompt)
-            return json.loads(extraction_result)
+        return await self._parse_llm_json_response(result.content)
 
     async def extract_resume_details(self, resume_text: str) -> Dict[str, Any]:
         """Extract structured information from a resume"""
@@ -84,20 +84,64 @@ class LanguageModelService:
             input_variables=["resume_text"]
         )
 
-        chain = LLMChain(llm=self.llm, prompt=prompt)
-        result = await chain.arun(resume_text=resume_text)
+        chain = prompt | self.llm
+        result = await chain.ainvoke({"resume_text": resume_text})
 
+        return self._parse_llm_json_response(result.content)
+
+    async def _parse_llm_json_response(self, response_text: str) -> Dict[str, Any]:
+        """
+        Robust JSON parser for LLM responses that handles various edge cases.
+
+        Args:
+            response_text: The text response from the LLM
+
+        Returns:
+            Parsed JSON as a dictionary
+        """
+        # Try direct parsing first
         try:
-            return json.loads(result)
+            return json.loads(response_text)
         except json.JSONDecodeError:
-            extraction_prompt = f"""
-            The following text should be converted to a valid JSON object:
-            {result}
-            
-            Please extract and return ONLY the valid JSON object.
-            """
-            extraction_result = await self.llm.apredict(extraction_prompt)
-            return json.loads(extraction_result)
+            pass
+
+        # Try to extract JSON from markdown code blocks
+        import re
+        json_pattern = r"```(?:json)?\s*([\s\S]*?)\s*```"
+        matches = re.findall(json_pattern, response_text)
+
+        if matches:
+            for match in matches:
+                try:
+                    return json.loads(match)
+                except json.JSONDecodeError:
+                    continue
+
+        # Try to find JSON-like content with curly braces
+        try:
+            start_idx = response_text.find('{')
+            end_idx = response_text.rfind('}') + 1
+
+            if start_idx >= 0 and end_idx > start_idx:
+                json_str = response_text[start_idx:end_idx]
+                return json.loads(json_str)
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+        # If all else fails, ask the LLM to fix the JSON
+        extraction_prompt = f"""
+        The following text should be converted to a valid JSON object:
+        {response_text}
+        
+        Please extract and return ONLY the valid JSON object with no additional text, markdown formatting, or code blocks.
+        """
+        extraction_chain = extraction_prompt | self.llm
+        try:
+            extraction_result = await extraction_chain.ainvoke({"text": response_text})
+            # Try to parse the fixed JSON
+            return json.loads(extraction_result.content)
+        except Exception as e:
+            raise ValueError(f"Failed to parse JSON response: {str(e)}")
 
     async def analyze_match(
         self, resume_data: Dict[str, Any], job_data: Dict[str, Any]
@@ -171,26 +215,26 @@ class LanguageModelService:
             ]
         )
 
-        chain = LLMChain(llm=self.llm, prompt=prompt)
-        result = await chain.arun(
-            job_title=job_data.get("title", ""),
-            job_skills=job_data.get("skills", []),
-            job_responsibilities=job_data.get("responsibilities", []),
-            job_required_qualifications=job_data.get(
+        chain = prompt | self.llm
+        result = await chain.ainvoke({
+            "job_title": job_data.get("title", ""),
+            "job_skills": job_data.get("skills", []),
+            "job_responsibilities": job_data.get("responsibilities", []),
+            "job_required_qualifications": job_data.get(
                 "required_qualifications", []),
-            job_preferred_qualifications=job_data.get(
+            "job_preferred_qualifications": job_data.get(
                 "preferred_qualifications", []),
-            resume_contact_info=resume_data.get("contact_info", {}),
-            resume_education=resume_data.get("education", []),
-            resume_experience=resume_data.get("experience", []),
-            resume_skills=resume_data.get("skills", []),
-            resume_certifications=resume_data.get("certifications", []),
-            resume_projects=resume_data.get("projects", [])
-        )
+            "resume_contact_info": resume_data.get("contact_info", {}),
+            "resume_education": resume_data.get("education", []),
+            "resume_experience": resume_data.get("experience", []),
+            "resume_skills": resume_data.get("skills", []),
+            "resume_certifications": resume_data.get("certifications", []),
+            "resume_projects": resume_data.get("projects", [])
+        })
 
         try:
             # Parse the LLM response into our data model
-            analysis_data = json.loads(result)
+            analysis_data = self._parse_llm_json_response(result.content)
 
             return MatchAnalysis(
                 id=uuid4(),
