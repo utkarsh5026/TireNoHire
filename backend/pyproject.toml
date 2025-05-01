@@ -9,6 +9,9 @@ readme = "README.md"
 python = "^3.12"
 fastapi = "^0.115.12"
 langchain = "^0.3.24"
+python-dotenv = "^1.1.0"
+pypdf2 = "^3.0.1"
+python-docx = "^1.1.2"
 
 
 [build-system]
