@@ -1,4 +1,3 @@
-// src/pages/LandingPage.tsx
 import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +17,6 @@ export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
 
   const handleUserTypeSelect = (type: UserType["type"]) => {
-    // In a real app, you might save this to context or local storage
     navigate(type === "jobSeeker" ? "/job-seeker" : "/recruiter");
   };
 
@@ -237,9 +235,3 @@ export const LandingPage: React.FC = () => {
     </div>
   );
 };
-
-// src/pages/JobSeekerPage.tsx
-
-// src/pages/RecruiterPage.tsx
-
-// src/pages/AppLayout.tsx

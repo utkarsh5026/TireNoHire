@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AppLayout } from "@/components/pages/Applayout";
 import { LandingPage } from "@/components/pages/LandingPage";
-import JobSeekerPage from "@/components/pages/JobSeekerPage";
+import JobSeekerPage from "@/components/seeker/JobSeekerPage";
 import RecruiterPage from "@/components/pages/RecruiterPage";
 
 const App: React.FC = () => {

@@ -143,3 +143,29 @@ export interface MatchAnalysis {
 export interface UserType {
   type: "jobSeeker" | "recruiter";
 }
+
+// src/types/resume.ts - Additions for resume history
+// Add these interfaces to your existing types file
+
+export interface SavedResumeInfo {
+  id: string;
+  resumeId: string;
+  userId: string;
+  savedAt: Date;
+  lastUsed?: Date;
+  tags?: string[];
+  notes?: string;
+}
+
+// Update UserType to include resume history preferences
+export interface UserPreferences {
+  autoSaveResumes: boolean;
+  maxSavedResumes: number;
+  defaultResumeId?: string;
+}
+
+// You can add this to your existing UserType interface
+// export interface UserType {
+//   type: "jobSeeker" | "recruiter";
+//   preferences?: UserPreferences;
+// }
