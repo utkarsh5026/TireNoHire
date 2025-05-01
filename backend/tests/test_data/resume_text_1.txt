@@ -1,0 +1,57 @@
+# tests/test_data/resume_text_1.txt
+JOHN SMITH
+Software Engineer
+
+Email: john.smith@example.com
+Phone: (555) 123-4567
+Location: San Francisco, CA
+
+SUMMARY
+Experienced software engineer with 5+ years of experience in full-stack development. Specialized in React, TypeScript, and Node.js with a passion for creating intuitive user interfaces and robust backend systems.
+
+EDUCATION
+University of California, Berkeley
+Bachelor of Science in Computer Science
+2015 - 2019
+GPA: 3.8/4.0
+
+WORK EXPERIENCE
+Senior Software Engineer
+TechCorp Inc., San Francisco, CA
+January 2021 - Present
+- Developed and maintained React-based frontend applications for enterprise clients
+- Implemented TypeScript best practices across 10+ projects, reducing bugs by 35%
+- Led a team of 4 developers to redesign the company's main product, improving performance by 50%
+- Created RESTful APIs using Node.js and Express, serving 100K+ daily users
+
+Software Engineer
+StartupXYZ, San Francisco, CA
+June 2019 - December 2020
+- Built responsive web applications using React and Redux
+- Collaborated with UI/UX designers to implement design systems
+- Developed microservices using Node.js, Express, and MongoDB
+- Participated in Agile development practices including daily stand-ups and sprint planning
+
+SKILLS
+- Languages: JavaScript, TypeScript, Python, HTML/CSS
+- Frontend: React, Redux, Angular, Vue.js
+- Backend: Node.js, Express, Django
+- Databases: MongoDB, PostgreSQL, MySQL
+- Tools: Git, Docker, AWS, Kubernetes
+- Methodologies: Agile, Scrum, TDD
+
+PROJECTS
+Personal Portfolio Website
+- Designed and implemented a responsive portfolio website using React and Tailwind CSS
+- Incorporated animations and interactive elements using Framer Motion
+- Implemented contact form functionality with serverless functions
+
+Task Management Application
+- Built a full-stack task management application using the MERN stack
+- Implemented user authentication with JWT
+- Created a drag-and-drop interface for task organization
+- Deployed the application to AWS
+
+CERTIFICATIONS
+- AWS Certified Developer - Associate (2022)
+- MongoDB Certified Developer (2021)

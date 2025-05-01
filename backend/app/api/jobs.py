@@ -27,19 +27,15 @@ async def create_job(job_create: JobCreate, background_tasks: BackgroundTasks):
         status="processing"
     )
 
-    # If it's a URL source, we need to extract the text
     if job_create.source == "link" and job_create.source_url:
         async def process_job_from_url():
             try:
-                # Extract text
                 doc_processor = DocumentProcessor()
                 text_content = await doc_processor.extract_text_from_url(job_create.source_url)
 
-                # Parse job description
                 language_model = LanguageModelService()
                 parsed_data = await language_model.extract_job_details(text_content)
 
-                # Update job
                 job.title = parsed_data.get("title", job.title)
                 job.requirements = parsed_data.get(
                     "skills", []) + parsed_data.get("required_qualifications", [])
@@ -57,7 +53,6 @@ async def create_job(job_create: JobCreate, background_tasks: BackgroundTasks):
 
         background_tasks.add_task(process_job_from_url)
     else:
-        # If text source, just set to ready
         job.status = "ready"
 
     # Store the job

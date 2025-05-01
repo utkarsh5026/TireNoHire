@@ -1,4 +1,3 @@
-from uuid import UUID
 from app.services.language_model import LanguageModelService
 from app.models.match import MatchAnalysis
 from app.models import Job, Resume

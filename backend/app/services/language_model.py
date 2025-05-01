@@ -1,7 +1,7 @@
 from langchain.prompts import PromptTemplate
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.chains import LLMChain
-from typing import Dict, Any, List
+from typing import Dict, Any
 import json
 from uuid import uuid4
 from fastapi import HTTPException

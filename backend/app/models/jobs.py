@@ -26,4 +26,4 @@ class JobInDB(JobBase):
 
 
 class Job(JobInDB):
-    pass
+    source: str  # Add this field to include it in responses

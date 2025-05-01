@@ -1,0 +1,70 @@
+# tests/test_data/resume_text_2.txt
+EMILY JOHNSON
+UI/UX Designer & Frontend Developer
+
+Contact: emily.johnson@example.com | (555) 987-6543 | Portland, OR
+Portfolio: www.emilyjohnson.design
+
+PROFESSIONAL SUMMARY
+Creative UI/UX designer with 3 years of experience combining strong design principles with frontend development skills. Passionate about creating intuitive, accessible user experiences with a focus on clean, modern aesthetics.
+
+EDUCATION
+Rhode Island School of Design
+Bachelor of Fine Arts, Graphic Design
+2017 - 2021
+Graduated with Honors
+
+EXPERIENCE
+UI/UX Designer
+DesignForward Agency, Portland, OR
+August 2021 - Present
+- Created user interface designs for 15+ web and mobile applications across various industries
+- Conducted user research and usability testing to inform design decisions
+- Developed interactive prototypes using Figma and Adobe XD
+- Implemented designs using HTML, CSS, and JavaScript with React
+- Collaborated with development teams to ensure design integrity during implementation
+
+Design Intern
+CreativeTech Solutions, Seattle, WA
+May 2020 - July 2021
+- Assisted senior designers with wireframing and prototyping
+- Created visual assets for web and mobile applications
+- Participated in design critique sessions and iterative improvement processes
+- Converted designs to functional HTML/CSS components
+
+SKILLS
+Design:
+- UI/UX Design
+- Visual Design
+- Wireframing & Prototyping
+- User Research
+- Usability Testing
+- Responsive Design
+
+Tools:
+- Figma
+- Adobe Creative Suite (Photoshop, Illustrator, XD)
+- Sketch
+- InVision
+
+Development:
+- HTML/CSS/SASS
+- JavaScript/TypeScript
+- React
+- Tailwind CSS
+- Version Control (Git)
+
+PROJECTS
+E-commerce Redesign - PetSupplyCo
+- Redesigned the user interface of a pet supply e-commerce site
+- Improved checkout conversion rate by 25% through streamlined process
+- Created a comprehensive design system for future development
+
+Mobile App Design - FitnessBuddy
+- Designed a fitness tracking mobile application from concept to high-fidelity prototype
+- Conducted user testing with 20 participants to refine the experience
+- Implemented frontend components using React Native
+
+LANGUAGES
+- English (Native)
+- Spanish (Conversational)
