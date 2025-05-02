@@ -204,7 +204,7 @@ class ContentProcessor:
                 content = file_response.content
                 content_hash = self._compute_hash(content)
 
-                temp_path = _write_to_temp_file(content, '.docx')
+                temp_path = self._write_to_temp_file(content, '.docx')
 
                 loader = Docx2txtLoader(temp_path)
                 documents = loader.load()
