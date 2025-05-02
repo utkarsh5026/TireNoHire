@@ -26,3 +26,20 @@ services:
       - "8000:8000"
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - MONGODB_URL=mongodb://mongo:27017
+      - DATABASE_NAME=tireno_hire
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:7.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: always
+    environment:
+      - MONGO_INITDB_DATABASE=tireno_hire
+
+volumes:
+  mongo_data:

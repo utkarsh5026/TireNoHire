@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from api import api_router
 from loguru import logger
 import time
+from db import connect_to_mongo, close_mongo_connection
 
 
 app = FastAPI(
@@ -41,6 +42,20 @@ async def log_requests(request: Request, call_next):
         f"Request completed: {request.method} {request.url.path} - Status: {response.status_code} - Time: {process_time:.4f}s")
 
     return response
+
+# Connect to MongoDB on startup
+
+
+@app.on_event("startup")
+async def startup_db_client():
+    await connect_to_mongo()
+
+# Close MongoDB connection on shutdown
+
+
+@app.on_event("shutdown")
+async def shutdown_db_client():
+    await close_mongo_connection()
 
 # Include API routes
 app.include_router(api_router, prefix="/api")
