@@ -21,6 +21,7 @@ python-multipart = "^0.0.20"
 beautifulsoup4 = "^4.13.4"
 trafilatura = "^2.0.0"
 pypdf = "^5.4.0"
+unstructured = "^0.17.2"
 
 
 [tool.poetry.group.dev.dependencies]
