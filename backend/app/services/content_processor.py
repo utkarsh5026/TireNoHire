@@ -18,7 +18,17 @@ from pydantic import BaseModel
 
 
 class DocumentChunk(BaseModel):
+    """📄 Represents a processed document chunk with metadata
+
+    Contains the extracted text content from documents along with processing information
+    and a unique content hash for identification and caching purposes.
+    """
     class Metadata(BaseModel):
+        """📊 Document processing statistics and metrics
+
+        Tracks the number of pages in the original document and how many
+        chunks it was split into during processing.
+        """
         page_count: int
         chunk_count: int
 
@@ -29,7 +39,19 @@ class DocumentChunk(BaseModel):
 
 
 class ContentProcessor:
+    """🔄 Processes various content types into structured document chunks
+
+    Handles different file formats (PDF, DOCX, HTML, etc.) and content sources
+    (files, URLs, raw text) and converts them into standardized document chunks
+    for further processing by language models.
+    """
+
     def __init__(self):
+        """🏗️ Initialize the content processor with text splitting configuration
+
+        Sets up the text splitter with appropriate chunk size and overlap settings
+        for optimal processing of documents into manageable pieces.
+        """
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=4000,
             chunk_overlap=200,
@@ -38,8 +60,24 @@ class ContentProcessor:
         )
 
     @classmethod
+    def _write_to_temp_file(cls, content: bytes, suffix: str) -> str:
+        """💾 Helper to write content bytes to a temporary file
+
+            Creates a temporary file with the specified suffix and writes the
+            provided content to it, returning the file path for further processing.
+        """
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+            temp_file.write(content)
+            temp_path = temp_file.name
+        return temp_path
+
+    @classmethod
     def _get_loader_for_file(cls, file_name: str) -> BaseLoader:
-        """Get the appropriate loader based on the file extension"""
+        """🔍 Determine the appropriate document loader based on file extension
+
+        Maps file extensions to their corresponding LangChain document loaders
+        to ensure proper parsing of different document formats.
+        """
         if file_name.endswith(".pdf"):
             return PyPDFLoader
         elif file_name.endswith(".docx") or file_name.endswith(".doc"):
@@ -55,19 +93,29 @@ class ContentProcessor:
 
     @classmethod
     def _compute_hash(cls, content: bytes) -> str:
-        """Compute SHA-256 hash of content"""
+        """🔐 Generate a unique SHA-256 hash from content bytes
+
+        Creates a consistent identifier for document content that can be
+        used for caching and detecting duplicate documents.
+        """
         return hashlib.sha256(content).hexdigest()
 
     async def process_file(self, file: UploadFile) -> DocumentChunk:
-        """Process uploaded file using LangChain document loaders"""
+        """📁 Process an uploaded file into a structured document chunk
+
+        Handles the file upload, creates a temporary local copy, extracts text
+        using the appropriate loader, splits into chunks, and returns a
+        standardized document representation with metadata.
+        """
         logger.info(f"Processing file: {file.filename}")
 
         content = await file.read()
         content_hash = self._compute_hash(content)
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as temp_file:
-            temp_file.write(content)
-            temp_path = temp_file.name
+        temp_path = self._write_to_temp_file(
+            content,
+            os.path.splitext(file.filename)[1]
+        )
 
         try:
             loader = self._get_loader_for_file(file.filename)(temp_path)
@@ -102,7 +150,12 @@ class ContentProcessor:
                     f"Failed to delete temporary file {temp_path}: {str(e)}")
 
     async def process_text(self, text: str) -> DocumentChunk:
+        """✏️ Convert raw text input into a structured document chunk
 
+        Takes plain text input, splits it into appropriate chunks for processing,
+        and returns a standardized document representation with metadata.
+        Useful for processing text that's not from a file.
+        """
         logger.info("Processing raw text input")
         content_hash = self._compute_hash(text.encode('utf-8'))
 
@@ -121,13 +174,13 @@ class ContentProcessor:
         )
 
     async def process_url(self, url: str) -> dict:
-        logger.info(f"Processing URL: {url}")
+        """🌐 Extract and process content from a URL into a document chunk
 
-        def _write_to_temp_file(content: bytes, suffix: str) -> str:
-            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
-                temp_file.write(content)
-                temp_path = temp_file.name
-            return temp_path
+        Fetches content from a web URL, detects the content type, processes it with
+        the appropriate loader based on file type (PDF, DOCX, HTML), and returns
+        a standardized document representation with metadata.
+        """
+        logger.info(f"Processing URL: {url}")
 
         try:
             response = requests.head(url, allow_redirects=True, timeout=10)
@@ -139,7 +192,7 @@ class ContentProcessor:
                 content = file_response.content
                 content_hash = self._compute_hash(content)
 
-                temp_path = _write_to_temp_file(content, '.pdf')
+                temp_path = self._write_to_temp_file(content, '.pdf')
 
                 loader = PyPDFLoader(temp_path)
                 documents = loader.load()
