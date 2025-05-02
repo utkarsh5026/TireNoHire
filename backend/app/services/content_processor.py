@@ -15,6 +15,8 @@ import requests
 from fastapi import UploadFile, HTTPException
 from loguru import logger
 from pydantic import BaseModel
+from core.config import settings
+from manager import cache_manager
 
 
 class DocumentChunk(BaseModel):
@@ -183,45 +185,79 @@ class ContentProcessor:
         logger.info(f"Processing URL: {url}")
 
         try:
+            # Check cache first if enabled
+            if settings.CACHE_URL_CONTENT:
+                cached_data = cache_manager.get_url_content(url)
+                if cached_data:
+                    logger.info(f"Cache hit for URL {url}")
+                    content = cached_data["content"]
+                    content_type = cached_data["metadata"]["content_type"]
+
+                    # If we also cached the extracted text, use it
+                    content_hash = cached_data["metadata"]["hash"]
+                    extracted_key = f"extracted:{content_hash}"
+                    cached_text = cache_manager.get(extracted_key)
+
+                    if cached_text and settings.CACHE_EXTRACTED_TEXT:
+                        logger.info(f"Using cached extracted text for {url}")
+                        return DocumentChunk(
+                            content_hash=content_hash,
+                            raw_text=cached_text,
+                            file_name=url,
+                            metadata=DocumentChunk.Metadata(
+                                page_count=cached_data["metadata"].get(
+                                    "page_count", 1),
+                                chunk_count=cached_data["metadata"].get(
+                                    "chunk_count", 1)
+                            )
+                        )
+
+            # If not cached, proceed with fetching and processing
             response = requests.head(url, allow_redirects=True, timeout=10)
             content_type = response.headers.get('Content-Type', '')
 
+            # Fetch the actual content
+            file_response = requests.get(url, timeout=30)
+            file_response.raise_for_status()
+            content = file_response.content
+
+            # Cache the raw content if caching is enabled
+            content_hash = cache_manager.hash_content(content)
+            if settings.CACHE_URL_CONTENT:
+                cache_manager.cache_url_content(
+                    url,
+                    content,
+                    content_type,
+                    settings.REDIS_TTL
+                )
+
+            # Process based on content type
+            documents = []
             if 'application/pdf' in content_type:
-                file_response = requests.get(url, timeout=30)
-                file_response.raise_for_status()
-                content = file_response.content
-                content_hash = self._compute_hash(content)
-
                 temp_path = self._write_to_temp_file(content, '.pdf')
-
                 loader = PyPDFLoader(temp_path)
                 documents = loader.load()
                 os.unlink(temp_path)
-
             elif 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' in content_type:
-                file_response = requests.get(url, timeout=30)
-                file_response.raise_for_status()
-                content = file_response.content
-                content_hash = self._compute_hash(content)
-
                 temp_path = self._write_to_temp_file(content, '.docx')
-
                 loader = Docx2txtLoader(temp_path)
                 documents = loader.load()
                 os.unlink(temp_path)
-
             else:
                 loader = UnstructuredURLLoader(
                     urls=[url], continue_on_failure=True)
                 documents = loader.load()
-                content = "\n".join(
-                    doc.page_content for doc in documents).encode('utf-8')
-                content_hash = self._compute_hash(content)
 
             # Split documents into chunks
             chunks = self.text_splitter.split_documents(documents)
             processed_text = "\n\n".join(
                 chunk.page_content for chunk in chunks)
+
+            # Cache the extracted text if caching is enabled
+            if settings.CACHE_EXTRACTED_TEXT:
+                extracted_key = f"extracted:{content_hash}"
+                cache_manager.set(
+                    extracted_key, processed_text, settings.REDIS_TTL)
 
             logger.info(
                 f"Document processed successfully, extracted {len(processed_text)} characters")
@@ -230,6 +266,17 @@ class ContentProcessor:
                 page_count=len(documents),
                 chunk_count=len(chunks)
             )
+
+            # Update the cache metadata with additional information
+            if settings.CACHE_URL_CONTENT:
+                meta_key = f"meta:{content_hash}"
+                cached_meta = cache_manager.get(meta_key) or {}
+                cached_meta.update({
+                    "page_count": len(documents),
+                    "chunk_count": len(chunks),
+                    "text_length": len(processed_text)
+                })
+                cache_manager.set(meta_key, cached_meta, settings.REDIS_TTL)
 
             return DocumentChunk(
                 content_hash=content_hash,

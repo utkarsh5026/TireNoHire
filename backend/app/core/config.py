@@ -22,5 +22,13 @@ class Settings:
     MONGODB_URL: str = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
     DATABASE_NAME: str = os.getenv("DATABASE_NAME", "tireno_hire")
 
+    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    REDIS_TTL: int = int(os.getenv("REDIS_TTL", "86400"))  # 24 hours default
+
+    # Cache settings
+    CACHE_URL_CONTENT: bool = True
+    CACHE_EXTRACTED_TEXT: bool = True
+    CACHE_PARSED_DATA: bool = True
+
 
 settings = Settings()
