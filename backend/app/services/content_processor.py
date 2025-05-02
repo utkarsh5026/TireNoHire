@@ -175,7 +175,7 @@ class ContentProcessor:
             )
         )
 
-    async def process_url(self, url: str) -> dict:
+    async def process_url(self, url: str) -> DocumentChunk:
         """🌐 Extract and process content from a URL into a document chunk
 
         Fetches content from a web URL, detects the content type, processes it with
