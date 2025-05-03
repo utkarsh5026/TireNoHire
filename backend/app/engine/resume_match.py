@@ -1,5 +1,5 @@
 from uuid import UUID
-from typing import  Any, Optional
+from typing import Any, Optional
 from app.services.analyzer.seeker import MatchAnalyzer
 from app.services.analyzer.models import MatchAnalysis
 from .resume import ResumeEngine
@@ -9,7 +9,7 @@ from fastapi import HTTPException
 from loguru import logger
 
 
-class MatchEngine:
+class ResumeMatchEngine:
     """🔍 Match analysis engine for comparing resumes to job descriptions
 
     Orchestrates the complete resume-to-job matching workflow:
@@ -319,7 +319,6 @@ class MatchEngine:
             return results
 
         except HTTPException as e:
-            # Re-raise HTTP exceptions for job data
             if "Job not found" in str(e.detail) or "Job is not ready" in str(e.detail):
                 raise
             raise HTTPException(status_code=e.status_code, detail=e.detail)

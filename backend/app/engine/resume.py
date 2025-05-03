@@ -1,5 +1,5 @@
 from fastapi import UploadFile
-from app.services.content_processor import ContentProcessor, DocumentChunk
+from app.core.content_processor import ContentProcessor, DocumentChunk
 from app.services.resume import ResumeExtractor, ResumeData
 from app.db import ResumeDB
 from loguru import logger

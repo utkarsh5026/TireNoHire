@@ -1,5 +1,5 @@
 from fastapi import UploadFile
-from app.services.content_processor import ContentProcessor, DocumentChunk
+from app.core.content_processor import ContentProcessor, DocumentChunk
 from app.services.jobs import JobDescriptionExtractor, JobData
 from app.db import JobDB
 from loguru import logger
