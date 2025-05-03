@@ -87,13 +87,16 @@ class JobDescriptionExtractor:
             end_time = time.time()
 
             logger.info(
-                f"Job parsing completed in {end_time - start_time:.2f} seconds")
+                f"Job parsing completed in {end_time - start_time:.2f} seconds"
+            )
 
             output_text = response.generations[0][0].text
             parsed_result = parser.parse(output_text)
 
             logger.info(
-                f"Successfully parsed job description: extracted {len(parsed_result.requirements)} requirements, {len(parsed_result.responsibilities)} responsibilities")
+                f"Successfully parsed job description: extracted {len(parsed_result.requirements)} requirements,"
+                f" {len(parsed_result.responsibilities)} responsibilities"
+            )
 
             return parsed_result
         except Exception as e:

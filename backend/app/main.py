@@ -30,7 +30,7 @@ async def log_requests(request: Request, call_next):
 
     # Log request details
     logger.info(f"Request started: {request.method} {request.url.path}")
-    logger.info(f"Request body: {await request.body()}")
+    # logger.info(f"Request body: {await request.body()}")
     logger.info(f"Request headers: {request.headers}")
 
     # Process the request

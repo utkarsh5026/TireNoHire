@@ -1,9 +1,9 @@
-from fastapi import APIRouter, HTTPException, Query
-from typing import List, Optional
+from fastapi import APIRouter, HTTPException, Query, Body, File, UploadFile
+from typing import List, Optional, Any
 from uuid import UUID
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl
 from app.services.analyzer.models import MatchAnalysis
-from app.engine import resume_match_engine
+from app.engine import resume_match_engine, job_engine, resume_engine
 from loguru import logger
 
 
@@ -25,6 +25,250 @@ class ComparisonRequest(BaseModel):
 
 
 router = APIRouter()
+
+
+class DirectComparisonRequest(BaseModel):
+    """Request model for direct file and URL comparison without pre-saved IDs"""
+    job_urls: list[HttpUrl]
+    resume_urls: Optional[list[HttpUrl]] = None
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "job_urls": ["https://example.com/job1", "https://example.com/job2"],
+                "resume_urls": ["https://example.com/resume1", "https://example.com/resume2"]
+            }
+        }
+
+
+class ComparisonResult(BaseModel):
+    """Response model for direct comparison results"""
+    job_title: str
+    job_company: Optional[str] = None
+    analyses: List[dict[str, Any]]
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "job_title": "Software Engineer",
+                "job_company": "Example Corp",
+                "analyses": [
+                    {
+                        "resume_name": "John Doe Resume",
+                        "overall_score": 85,
+                        "summary": "Strong match with key skills...",
+                        "detailed_analysis": {"...": "..."}
+                    }
+                ]
+            }
+        }
+
+
+@router.post("/direct-comparison", response_model=List[ComparisonResult])
+async def direct_comparison(
+        job_urls: Optional[List[str]] = Body(None),
+        resume_urls: Optional[List[str]] = Body(None),
+        resume_files: Optional[List[UploadFile]] = File(None),
+        job_files: Optional[List[UploadFile]] = File(None),
+        job_text: Optional[str] = Body(None),
+        resume_text: Optional[str] = Body(None)
+):
+    """Process and compare resumes against job descriptions directly
+
+    This endpoint allows direct submission of resumes and job descriptions through:
+    - URLs (job_urls, resume_urls)
+    - File uploads (resume_files, job_files)
+    - Direct text input (job_text, resume_text)
+
+    It returns a comprehensive analysis for each job-resume combination.
+
+    Note: At least one job source and one resume source must be provided.
+    """
+    try:
+        # Validate we have at least one job and one resume
+        if not any([job_urls, job_files, job_text]):
+            raise HTTPException(
+                status_code=400,
+                detail="At least one job source (URL, file, or text) must be provided"
+            )
+
+        if not any([resume_urls, resume_files, resume_text]):
+            raise HTTPException(
+                status_code=400,
+                detail="At least one resume source (URL, file, or text) must be provided"
+            )
+
+        # Process jobs
+        processed_jobs = []
+
+        # From URLs
+        if job_urls:
+            for url in job_urls:
+                try:
+                    job_data = await job_engine.from_url(url)
+                    processed_jobs.append({
+                        "title": job_data.get("title", "Untitled Job"),
+                        "company": job_data.get("company"),
+                        "data": job_data,
+                        "source": f"URL: {url}"
+                    })
+                except Exception as e:
+                    logger.error(f"Error processing job URL {url}: {str(e)}")
+                    # Continue with other jobs
+
+        # From files
+        if job_files:
+            for file in job_files:
+                try:
+                    job_data = await job_engine.from_file(file)
+                    processed_jobs.append({
+                        "title": job_data.get("title", "Untitled Job"),
+                        "company": job_data.get("company"),
+                        "data": job_data,
+                        "source": f"File: {file.filename}"
+                    })
+                except Exception as e:
+                    logger.error(f"Error processing job file {file.filename}: {str(e)}")
+                    # Continue with other jobs
+
+        # From text
+        if job_text:
+            try:
+                job_data = await job_engine.from_text(job_text)
+                processed_jobs.append({
+                    "title": job_data.get("title", "Untitled Job"),
+                    "company": job_data.get("company"),
+                    "data": job_data,
+                    "source": "Direct text input"
+                })
+            except Exception as e:
+                logger.error(f"Error processing job text: {str(e)}")
+
+        if not processed_jobs:
+            raise HTTPException(
+                status_code=400,
+                detail="Failed to process any job descriptions"
+            )
+
+        # Process resumes
+        processed_resumes = []
+
+        # From URLs
+        if resume_urls:
+            for url in resume_urls:
+                try:
+                    resume_data = await resume_engine.from_url(url)
+                    processed_resumes.append({
+                        "name": resume_data.get("contact_info", {}).get("name", "Unnamed Resume"),
+                        "data": resume_data,
+                        "source": f"URL: {url}"
+                    })
+                except Exception as e:
+                    logger.error(f"Error processing resume URL {url}: {str(e)}")
+                    # Continue with other resumes
+
+        # From files
+        if resume_files:
+            for file in resume_files:
+                try:
+                    resume_data = await resume_engine.from_file(file)
+                    processed_resumes.append({
+                        "name": resume_data.get("contact_info", {}).get("name", file.filename),
+                        "data": resume_data,
+                        "source": f"File: {file.filename}"
+                    })
+                except Exception as e:
+                    logger.error(f"Error processing resume file {file.filename}: {str(e)}")
+                    # Continue with other resumes
+
+        # From text
+        if resume_text:
+            try:
+                resume_data = await resume_engine.from_text(resume_text)
+                processed_resumes.append({
+                    "name": resume_data.get("contact_info", {}).get("name", "Text Resume"),
+                    "data": resume_data,
+                    "source": "Direct text input"
+                })
+            except Exception as e:
+                logger.error(f"Error processing resume text: {str(e)}")
+
+        if not processed_resumes:
+            raise HTTPException(
+                status_code=400,
+                detail="Failed to process any resumes"
+            )
+
+        # Run comparisons for each job-resume combination
+        results = []
+        for job in processed_jobs:
+            job_analyses = []
+
+            for resume in processed_resumes:
+                try:
+                    # Prepare data for the analyzer
+                    job_data_for_analysis = {
+                        "id": job["data"].get("id", "temp-job-id"),
+                        "title": job["data"].get("title", "Untitled Job"),
+                        "requirements": job["data"].get("requirements", []),
+                        "responsibilities": job["data"].get("responsibilities", []),
+                        "preferred_qualifications": job["data"].get("preferred_qualifications", []),
+                        "benefits": job["data"].get("benefits", []),
+                        "parsed_data": job["data"]
+                    }
+
+                    resume_data_for_analysis = {
+                        "id": resume["data"].get("id", "temp-resume-id"),
+                        "parsed_data": resume["data"]
+                    }
+
+                    # Perform the analysis directly using the analyzer
+                    analysis_result = await resume_match_engine.match_analyzer.analyze_match(
+                        resume_data_for_analysis,
+                        job_data_for_analysis
+                    )
+
+                    # Convert to dict for response (including all the detailed fields)
+                    if hasattr(analysis_result, 'model_dump'):
+                        analysis_dict = analysis_result.model_dump()
+                    else:
+                        analysis_dict = analysis_result.dict()
+
+                    # Add resume name for reference
+                    job_analyses.append({
+                        "resume_name": resume["name"],
+                        "resume_source": resume["source"],
+                        "overall_score": analysis_dict["overall_score"],
+                        "summary": analysis_dict["summary"],
+                        "detailed_analysis": analysis_dict
+                    })
+
+                except Exception as e:
+                    logger.error(f"Error analyzing {resume['name']} for {job['title']}: {str(e)}")
+                    # Continue with other comparisons
+
+            # Sort by overall score
+            job_analyses.sort(key=lambda x: x["overall_score"], reverse=True)
+
+            # Add to results if we have any analyses
+            if job_analyses:
+                results.append(ComparisonResult(
+                    job_title=job["title"],
+                    job_company=job["company"],
+                    analyses=job_analyses
+                ))
+
+        return results
+
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in direct comparison: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error performing direct comparison: {str(e)}"
+        )
 
 
 @router.post("/analyze", response_model=MatchAnalysis)
@@ -107,8 +351,8 @@ async def get_matches_by_job(
     Results are sorted by overall score (highest first).
     """
     try:
-        # Get analyses using batch analyze with all resumes for this job
-        from db import MatchAnalysisDB
+        # Get analyses using batch analyse with all resumes for this job
+        from app.db import MatchAnalysisDB
 
         # Find all existing matches for this job
         matches = await MatchAnalysisDB.find({"job_id": job_id}).to_list()
@@ -146,7 +390,7 @@ async def get_matches_by_resume(
     Results are sorted by overall score (highest first).
     """
     try:
-        from db import MatchAnalysisDB
+        from app.db import MatchAnalysisDB
 
         # Find all existing matches for this resume
         matches = await MatchAnalysisDB.find({"resume_id": resume_id}).to_list()
