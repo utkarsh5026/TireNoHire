@@ -1,10 +1,13 @@
-from fastapi import APIRouter, HTTPException, Query, Body, File, UploadFile
+from fastapi import (
+    APIRouter, HTTPException, Query, Body, File, UploadFile, status)
 from typing import List, Optional, Any
 from uuid import UUID
 from pydantic import BaseModel, HttpUrl
 from app.services.analyzer.models import MatchAnalysis
 from app.engine import resume_match_engine, job_engine, resume_engine
 from loguru import logger
+from app.services.jobs.models import JobData
+from app.services.resume.models import ResumeData
 
 
 class MatchAnalysisCreate(BaseModel):
@@ -85,7 +88,6 @@ async def direct_comparison(
     Note: At least one job source and one resume source must be provided.
     """
     try:
-        # Validate we have at least one job and one resume
         if not any([job_urls, job_files, job_text]):
             raise HTTPException(
                 status_code=400,
@@ -98,100 +100,59 @@ async def direct_comparison(
                 detail="At least one resume source (URL, file, or text) must be provided"
             )
 
-        # Process jobs
-        processed_jobs = []
+        processed_jobs: list[JobData] = []
 
-        # From URLs
         if job_urls:
             for url in job_urls:
                 try:
                     job_data = await job_engine.from_url(url)
-                    processed_jobs.append({
-                        "title": job_data.get("title", "Untitled Job"),
-                        "company": job_data.get("company"),
-                        "data": job_data,
-                        "source": f"URL: {url}"
-                    })
+                    processed_jobs.append(job_data)
                 except Exception as e:
                     logger.error(f"Error processing job URL {url}: {str(e)}")
-                    # Continue with other jobs
 
         # From files
         if job_files:
             for file in job_files:
                 try:
                     job_data = await job_engine.from_file(file)
-                    processed_jobs.append({
-                        "title": job_data.get("title", "Untitled Job"),
-                        "company": job_data.get("company"),
-                        "data": job_data,
-                        "source": f"File: {file.filename}"
-                    })
+                    processed_jobs.append(job_data)
                 except Exception as e:
-                    logger.error(f"Error processing job file {file.filename}: {str(e)}")
-                    # Continue with other jobs
+                    logger.error(
+                        f"Error processing job file {file.filename}: {str(e)}")
 
         # From text
         if job_text:
             try:
                 job_data = await job_engine.from_text(job_text)
-                processed_jobs.append({
-                    "title": job_data.get("title", "Untitled Job"),
-                    "company": job_data.get("company"),
-                    "data": job_data,
-                    "source": "Direct text input"
-                })
+                processed_jobs.append(job_data)
             except Exception as e:
                 logger.error(f"Error processing job text: {str(e)}")
 
         if not processed_jobs:
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Failed to process any job descriptions"
             )
 
-        # Process resumes
-        processed_resumes = []
+        processed_resumes: list[ResumeData] = []
 
-        # From URLs
         if resume_urls:
             for url in resume_urls:
                 try:
                     resume_data = await resume_engine.from_url(url)
-                    processed_resumes.append({
-                        "name": resume_data.get("contact_info", {}).get("name", "Unnamed Resume"),
-                        "data": resume_data,
-                        "source": f"URL: {url}"
-                    })
+                    processed_resumes.append(resume_data)
                 except Exception as e:
-                    logger.error(f"Error processing resume URL {url}: {str(e)}")
-                    # Continue with other resumes
+                    logger.error(
+                        f"Error processing resume URL {url}: {str(e)}")
 
-        # From files
         if resume_files:
             for file in resume_files:
                 try:
                     resume_data = await resume_engine.from_file(file)
-                    processed_resumes.append({
-                        "name": resume_data.get("contact_info", {}).get("name", file.filename),
-                        "data": resume_data,
-                        "source": f"File: {file.filename}"
-                    })
+                    processed_resumes.append(resume_data)
                 except Exception as e:
-                    logger.error(f"Error processing resume file {file.filename}: {str(e)}")
-                    # Continue with other resumes
-
-        # From text
-        if resume_text:
-            try:
-                resume_data = await resume_engine.from_text(resume_text)
-                processed_resumes.append({
-                    "name": resume_data.get("contact_info", {}).get("name", "Text Resume"),
-                    "data": resume_data,
-                    "source": "Direct text input"
-                })
-            except Exception as e:
-                logger.error(f"Error processing resume text: {str(e)}")
+                    logger.error(
+                        f"Error processing resume file {file.filename}: {str(e)}")
 
         if not processed_resumes:
             raise HTTPException(
@@ -199,74 +160,47 @@ async def direct_comparison(
                 detail="Failed to process any resumes"
             )
 
-        # Run comparisons for each job-resume combination
         results = []
         for job in processed_jobs:
             job_analyses = []
 
             for resume in processed_resumes:
                 try:
-                    # Prepare data for the analyzer
-                    job_data_for_analysis = {
-                        "id": job["data"].get("id", "temp-job-id"),
-                        "title": job["data"].get("title", "Untitled Job"),
-                        "requirements": job["data"].get("requirements", []),
-                        "responsibilities": job["data"].get("responsibilities", []),
-                        "preferred_qualifications": job["data"].get("preferred_qualifications", []),
-                        "benefits": job["data"].get("benefits", []),
-                        "parsed_data": job["data"]
-                    }
-
-                    resume_data_for_analysis = {
-                        "id": resume["data"].get("id", "temp-resume-id"),
-                        "parsed_data": resume["data"]
-                    }
-
-                    # Perform the analysis directly using the analyzer
                     analysis_result = await resume_match_engine.match_analyzer.analyze_match(
-                        resume_data_for_analysis,
-                        job_data_for_analysis
+                        resume,
+                        job
                     )
 
-                    # Convert to dict for response (including all the detailed fields)
-                    if hasattr(analysis_result, 'model_dump'):
-                        analysis_dict = analysis_result.model_dump()
-                    else:
-                        analysis_dict = analysis_result.dict()
+                    logger.info(
+                        f"Analysis result: {analysis_result.model_dump()}")
 
-                    # Add resume name for reference
                     job_analyses.append({
-                        "resume_name": resume["name"],
-                        "resume_source": resume["source"],
-                        "overall_score": analysis_dict["overall_score"],
-                        "summary": analysis_dict["summary"],
-                        "detailed_analysis": analysis_dict
+                        "resume_name": resume.contact_info.name,
+                        "overall_score": analysis_result.overall_score,
+                        "summary": analysis_result.summary,
+                        "detailed_analysis": analysis_result.model_dump(mode='json')
                     })
 
                 except Exception as e:
-                    logger.error(f"Error analyzing {resume['name']} for {job['title']}: {str(e)}")
-                    # Continue with other comparisons
+                    logger.error(
+                        f"Error analyzing {resume.contact_info.name} for {job.title}: {str(e)}")
 
-            # Sort by overall score
-            job_analyses.sort(key=lambda x: x["overall_score"], reverse=True)
-
-            # Add to results if we have any analyses
             if job_analyses:
                 results.append(ComparisonResult(
-                    job_title=job["title"],
-                    job_company=job["company"],
+                    job_title=job.title,
+                    job_company=job.company,
                     analyses=job_analyses
                 ))
 
         return results
 
     except HTTPException:
-        # Re-raise HTTP exceptions
         raise
     except Exception as e:
-        logger.error(f"Unexpected error in direct comparison: {str(e)}")
+        logger.error(
+            f"Unexpected error in direct comparison: {e.__traceback__}")
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error performing direct comparison: {str(e)}"
         )
 

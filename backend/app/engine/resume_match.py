@@ -55,7 +55,6 @@ class ResumeMatchEngine:
                 logger.info(
                     f"Cache hit: Found existing match analysis for {resume_id} and {job_id}")
 
-                # Convert DB model to API model
                 return MatchAnalysis(
                     id=existing_match.match_id,
                     resume_id=existing_match.resume_id,
@@ -94,9 +93,7 @@ class ResumeMatchEngine:
             analysis: Match analysis to save
         """
         try:
-            # Use model_dump for Pydantic v2 compatibility
-            analysis_dict = analysis.model_dump() if hasattr(
-                analysis, 'model_dump') else analysis.dict()
+            analysis_dict = analysis.model_dump()
 
             # Create DB model
             match_db = MatchAnalysisDB(

@@ -15,6 +15,7 @@ class JobData(BaseModel):
     company: Optional[str] = None
     location: Optional[str] = None
     type: Optional[str] = None
+    seniority: Optional[str] = None
     description: str
     requirements: list[JobRequirement] = Field(default_factory=list)
     responsibilities: list[str] = Field(default_factory=list)
@@ -22,3 +23,5 @@ class JobData(BaseModel):
     benefits: Optional[list[str]] = None
     salary_range: Optional[str] = None
     industry: Optional[str] = None
+    skills: list[str] = Field(default_factory=list)
+    required_qualifications: list[str] = Field(default_factory=list)
