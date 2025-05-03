@@ -1,3 +1,4 @@
+from typing import Optional, Any, List
 from beanie import Document
 from typing import Optional, Any
 from datetime import datetime
@@ -63,25 +64,41 @@ class JobDB(BaseDocument):
         ]
 
 
-class MatchAnalysisDB(BaseDocument):
+class MatchAnalysisDB(Document):
     match_id: UUID = Field(default_factory=uuid4)
     resume_id: UUID
     job_id: UUID
     overall_score: int
     summary: str
-    section_scores: list[dict[str, Any]]
-    skill_matches: list[dict[str, Any]]
-    experience_matches: list[dict[str, Any]]
-    education_matches: list[dict[str, Any]]
-    keyword_matches: list[dict[str, Any]]
-    improvement_suggestions: list[dict[str, Any]]
+    section_scores: List[dict[str, Any]]
+    skill_matches: List[dict[str, Any]]
+    experience_matches: List[dict[str, Any]]
+    education_matches: List[dict[str, Any]]
+    keyword_matches: List[dict[str, Any]]
+    improvement_suggestions: List[dict[str, Any]]
+
+    # Enhanced fields from the Seeker analyzer
+    key_strengths: Optional[List[str]] = None
+    key_gaps: Optional[List[str]] = None
+    competitiveness: Optional[str] = None
+    ats_optimization_tips: Optional[List[dict[str, Any]]] = None
+    interview_preparation: Optional[List[str]] = None
+    career_path_alignment: Optional[str] = None
+
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
 
     class Settings:
         name = "matches"
         indexes = [
             "resume_id",
-            "job_id"
+            "job_id",
+            [("resume_id", 1), ("job_id", 1)]
         ]
+
+    async def save_document(self):
+        self.updated_at = datetime.now()
+        return await self.save()
 
     @property
     def cache_key(self) -> str:

@@ -1,4 +1,4 @@
-from services.base_extractor.base import BaseExtractor
+from app.services.base_extractor.base import BaseExtractor
 from langchain_core.output_parsers import PydanticOutputParser
 from typing import Any
 from uuid import uuid4

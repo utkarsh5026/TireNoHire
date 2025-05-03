@@ -4,7 +4,7 @@ import time
 from typing import Any, Optional, Dict, Union, TypeVar, Generic
 from loguru import logger
 import redis
-from core.config import settings
+from app.core.config import settings
 
 T = TypeVar('T')
 

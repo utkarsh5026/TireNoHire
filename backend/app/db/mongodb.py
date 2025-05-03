@@ -1,16 +1,24 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
 from loguru import logger
-from core.config import settings
+from app.core.config import settings
 from typing import Optional
-from db.models import ResumeDB, JobDB, MatchAnalysisDB
+from app.db.models import ResumeDB, JobDB, MatchAnalysisDB
 
-# Global client variable
+
 client: Optional[AsyncIOMotorClient] = None
 
 
 async def connect_to_mongo():
-    """Create database connection."""
+    """🔌 Create database connection
+
+    Establishes a connection to MongoDB using the configured URL,
+    initializes Beanie with the appropriate document models,
+    and logs the connection status.
+
+    Raises:
+        Exception: If connection to MongoDB fails
+    """
     global client
     try:
         client = AsyncIOMotorClient(settings.MONGODB_URL)
@@ -25,7 +33,11 @@ async def connect_to_mongo():
 
 
 async def close_mongo_connection():
-    """Close database connection."""
+    """👋 Close database connection
+
+    Gracefully closes the MongoDB connection when the application
+    is shutting down and logs the closure.
+    """
     global client
     if client:
         client.close()
@@ -33,5 +45,12 @@ async def close_mongo_connection():
 
 
 def get_db():
-    """Return db client."""
+    """🗃️ Return database client
+
+    Provides access to the MongoDB database instance for
+    performing database operations throughout the application.
+
+    Returns:
+        Database: MongoDB database instance or None if not connected
+    """
     return client[settings.DATABASE_NAME] if client else None

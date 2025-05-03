@@ -8,7 +8,7 @@ from fastapi import (
 )
 from typing import Optional
 from loguru import logger
-from engine import resume_engine
+from app.engine import resume_engine
 from pydantic import BaseModel
 
 router = APIRouter()

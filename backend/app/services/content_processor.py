@@ -15,8 +15,8 @@ import requests
 from fastapi import UploadFile, HTTPException
 from loguru import logger
 from pydantic import BaseModel
-from core.config import settings
-from manager import cache_manager
+from app.core.config import settings
+from app.manager import cache_manager
 
 
 class DocumentChunk(BaseModel):
