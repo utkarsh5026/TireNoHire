@@ -1,12 +1,23 @@
-from typing import Optional, Any, List
+from typing import Optional, Any, List, Literal
 from beanie import Document
 from typing import Optional, Any
 from datetime import datetime
 from uuid import UUID, uuid4
-from pydantic import Field
+from pydantic import Field, HttpUrl
+from app.services.jobs import JobData
+from app.services.resume import ResumeData
 
 
 class BaseDocument(Document):
+    """📄 Base document model for all database collections
+
+    Provides common fields and functionality for all document types:
+    - ⏰ Automatic timestamp tracking
+    - 💾 Simplified save method with timestamp updates
+    - 🔄 State management for tracking changes
+
+    All other document models should inherit from this base class.
+    """
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
@@ -14,22 +25,46 @@ class BaseDocument(Document):
         use_state_management = True
 
     async def save_document(self):
+        """💾 Save document with automatic timestamp update
+
+        Updates the 'updated_at' field to the current time before saving.
+
+        Returns:
+            The saved document instance
+        """
         self.updated_at = datetime.now()
         return await self.save()
 
-# Resume document
-
 
 class ResumeDB(BaseDocument):
-    content_hash: str = Field(index=True)  # Use content hash for cache lookup
+    """📝 Resume document model for storing resume data
+
+    Stores both raw resume content and structured parsed data:
+    - 🔑 Unique identifiers and content hash for deduplication
+    - 📄 Original text content from the resume
+    - 🧩 Structured data extracted from parsing
+    - 🔗 Source information (file or link)
+    """
+    content_hash: str = Field(index=True)
+    """🔑 Unique hash of the resume content for deduplication"""
+
     resume_id: UUID = Field(default_factory=uuid4)
+    """🔑 Unique identifier for the resume"""
+
     name: str
-    type: str  # "file" or "link"
-    url: Optional[str] = None
-    status: str = "processing"  # "uploading", "processing", "ready", "error"
-    error: Optional[str] = None
+    """👤 Name of the resume or document"""
+
+    type: Literal["file", "link"]
+    """🔗 Source type of the resume (file upload or link)"""
+
+    url: Optional[HttpUrl] = None
+    """🔗 URL source of the resume if type is 'link'"""
+
     text_content: Optional[str] = None
-    parsed_data: Optional[dict[str, Any]] = None
+    """📄 Raw text content extracted from the resume"""
+
+    parsed_data: Optional[ResumeData] = None
+    """🧩 Structured data extracted from parsing the resume"""
 
     class Settings:
         name = "resumes"
@@ -38,24 +73,49 @@ class ResumeDB(BaseDocument):
             "resume_id"
         ]
 
-# Job document
-
 
 class JobDB(BaseDocument):
-    content_hash: str = Field(index=True)  # Use content hash for cache lookup
-    job_id: UUID = Field(default_factory=uuid4)
-    title: str
-    description: str
-    requirements: list[str]
-    responsibilities: list[str]
-    preferred_qualifications: Optional[list[str]] = None
-    benefits: Optional[list[str]] = None
-    source: str = "text"  # "text" or "link"
-    source_url: Optional[str] = None
-    status: str = "processing"  # "processing", "ready", "error"
-    error: Optional[str] = None
-    parsed_data: Optional[dict[str, Any]] = None
+    """💼 Job document model for storing job description data
 
+    Stores both raw job description content and structured parsed data:
+    - 🔑 Unique identifiers and content hash for deduplication
+    - 📋 Job details including title, description, requirements
+    - 📊 Structured components like responsibilities and qualifications
+    - 🔗 Source information (text input or link)
+    - 🧩 Complete parsed data for analysis
+    """
+    content_hash: str = Field(index=True)
+    """🔑 Unique identifiers and content hash for deduplication"""
+
+    job_id: UUID = Field(default_factory=uuid4)
+    """🔑 Unique identifier for the job"""
+
+    title: str
+    """💼 Title of the job"""
+
+    description: str
+    """💼 Description of the job"""
+
+    requirements: list[str]
+    """💼 Requirements of the job"""
+
+    responsibilities: list[str]
+    """💼 Responsibilities of the job"""
+
+    preferred_qualifications: Optional[list[str]] = None
+    """💼 Preferred qualifications of the job"""
+
+    benefits: Optional[list[str]] = None
+    """💼 Benefits of the job"""
+
+    source: Literal["text", "link", "file"] = "text"
+    """🔗 Source information (text input or link)"""
+
+    source_url: Optional[HttpUrl] = None
+    """🔗 Source URL of the job"""
+
+    parsed_data: Optional[JobData] = None
+    """🧩 Complete parsed data for analysis"""
     class Settings:
         name = "jobs"
         indexes = [

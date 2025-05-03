@@ -3,6 +3,11 @@ from app.core.content_processor import ContentProcessor, DocumentChunk
 from app.services.jobs import JobDescriptionExtractor, JobData
 from app.db import JobDB
 from loguru import logger
+from typing import Literal, Optional
+from pydantic import HttpUrl
+
+
+SourceType = Literal["text", "file", "link"]
 
 
 class JobEngine:
@@ -26,6 +31,45 @@ class JobEngine:
         """
         self.content_processor = ContentProcessor()
         self.job_extractor = JobDescriptionExtractor()
+
+    @classmethod
+    def create_job_db(cls, job_data: JobData, content_hash: str, source: SourceType, source_url: Optional[HttpUrl] = None):
+        """💾 Create a new job database record
+
+        Constructs a new JobDB instance with the provided job data,
+        content hash, source type, and optional source URL.
+        """
+
+        return JobDB(
+            content_hash=content_hash,
+            title=job_data.title,
+            description=job_data.description,
+            requirements=[req.description for req in job_data.requirements],
+            responsibilities=job_data.responsibilities,
+            preferred_qualifications=job_data.preferred_qualifications,
+            benefits=job_data.benefits,
+            source=source,
+            source_url=source_url,
+            parsed_data=job_data
+        )
+
+    @classmethod
+    def convert_job_data_to_db(cls, jdb: JobDB, job_data: JobData, source: SourceType, source_url: Optional[HttpUrl] = None) -> JobDB:
+        """🔄 Convert JobData to JobDB
+
+        Converts a JobData object into a JobDB instance.
+        """
+        jdb.title = job_data.title
+        jdb.description = job_data.description
+        jdb.requirements = [
+            req.description for req in job_data.requirements]
+        jdb.responsibilities = job_data.responsibilities
+        jdb.preferred_qualifications = job_data.preferred_qualifications
+        jdb.benefits = job_data.benefits
+        jdb.source = source
+        jdb.source_url = source_url
+        jdb.parsed_data = job_data
+        return jdb
 
     async def _parse_job_data(self, text: str) -> JobData:
         """📝 Extract structured data from job description text
@@ -57,32 +101,27 @@ class JobEngine:
         existing_job = await JobDB.find_one({"content_hash": content_hash})
         return existing_job
 
-    async def _save_job(self, document_chunk: DocumentChunk, job_data: JobData):
+    async def _save_job(self, content_hash: str, job_data: JobData, source: SourceType, source_url: Optional[HttpUrl] = None):
         """💾 Save a new job to the database
 
         Creates a new job record with both raw content and
         structured data for future retrieval.
 
         Args:
-            document_chunk: Processed document with raw text and metadata
+            content_hash: Hash of the content
             job_data: Structured job information extracted from the document
+            source: Source type ("file", "text", or "link")
+            source_url: URL source if applicable
         """
-        new_job = JobDB(
-            content_hash=document_chunk.content_hash,
-            title=job_data.title,
-            description=document_chunk.raw_text,
-            requirements=[req.description for req in job_data.requirements],
-            responsibilities=job_data.responsibilities,
-            preferred_qualifications=job_data.preferred_qualifications,
-            benefits=job_data.benefits,
-            source="file",
-            status="ready",
-            parsed_data=job_data.model_dump()
-        )
+        new_job = self.create_job_db(
+            job_data,
+            content_hash,
+            source,
+            source_url)
         await new_job.save_document()
         logger.info(f"Created new job {new_job.id}")
 
-    async def _process_document_chunk(self, document_chunk: DocumentChunk, source: str, source_url: str = None):
+    async def _process_document_chunk(self, document_chunk: DocumentChunk, source: SourceType, source_url: Optional[HttpUrl] = None) -> JobData:
         """🔄 Process a document chunk into job data
 
         Common processing logic for both file and URL sources:
@@ -99,31 +138,26 @@ class JobEngine:
             Structured job data as a dictionary
         """
         existing_job = await self._find_from_db(document_chunk.content_hash)
-        if existing_job and existing_job.status == "ready" and existing_job.parsed_data:
+        if existing_job and existing_job.parsed_data:
             logger.info(
-                f"Cache hit: Found existing job with hash {document_chunk.content_hash}")
+                f"Cache hit: Found existing job with hash {document_chunk.content_hash}"
+            )
             return existing_job.parsed_data
 
         job_data = await self._parse_job_data(document_chunk.raw_text)
 
         if existing_job:
-            existing_job.title = job_data.title
-            existing_job.description = document_chunk.raw_text
-            existing_job.requirements = [
-                req.description for req in job_data.requirements]
-            existing_job.responsibilities = job_data.responsibilities
-            existing_job.preferred_qualifications = job_data.preferred_qualifications
-            existing_job.benefits = job_data.benefits
-            existing_job.source = source
-            existing_job.source_url = source_url
-            existing_job.parsed_data = job_data.model_dump()
-            existing_job.status = "ready"
+            existing_job = self.convert_job_data_to_db(
+                existing_job,
+                job_data,
+                source,
+                source_url)
             await existing_job.save_document()
             logger.info(f"Updated existing job {existing_job.id}")
         else:
-            await self._save_job(document_chunk, job_data)
+            await self._save_job(document_chunk.content_hash, job_data, source, source_url)
 
-        return job_data.model_dump()
+        return job_data
 
     async def from_file(self, file: UploadFile):
         """📄 Process a job description from an uploaded file
