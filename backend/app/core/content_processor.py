@@ -14,7 +14,7 @@ import os
 import requests
 from fastapi import UploadFile, HTTPException
 from loguru import logger
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl
 from app.core.config import settings
 from app.manager import cache_manager
 
@@ -175,7 +175,7 @@ class ContentProcessor:
             )
         )
 
-    async def process_url(self, url: str) -> DocumentChunk:
+    async def process_url(self, url: HttpUrl) -> DocumentChunk:
         """🌐 Extract and process content from a URL into a document chunk
 
         Fetches content from a web URL, detects the content type, processes it with

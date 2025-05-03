@@ -86,7 +86,8 @@ class JobEngine:
         job_data = await self.job_extractor.parse_job_description(text)
         return job_data
 
-    async def _find_from_db(self, content_hash: str):
+    @classmethod
+    async def _find_from_db(cls, content_hash: str):
         """🔍 Look up a job in the database by content hash
 
         Searches for previously processed jobs to enable caching
@@ -175,7 +176,7 @@ class JobEngine:
         document_chunk = await self.content_processor.process_file(file)
         return await self._process_document_chunk(document_chunk, "file")
 
-    async def from_url(self, url: str):
+    async def from_url(self, url: HttpUrl):
         """📄 Process a job description from a URL
 
         Handles the complete job processing workflow for URLs:

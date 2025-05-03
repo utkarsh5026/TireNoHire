@@ -1,8 +1,13 @@
 from fastapi import UploadFile
+from typing import Literal, Optional
 from app.core.content_processor import ContentProcessor, DocumentChunk
 from app.services.resume import ResumeExtractor, ResumeData
 from app.db import ResumeDB
+from pydantic import HttpUrl
 from loguru import logger
+
+
+SourceType = Literal["file", "url"]
 
 
 class ResumeEngine:
@@ -42,7 +47,8 @@ class ResumeEngine:
         resume_data = await self.resume_extractor.parse_resume(text)
         return resume_data
 
-    async def _find_from_db(self, content_hash: str):
+    @classmethod
+    async def _find_from_db(cls, content_hash: str):
         """🔍 Look up a resume in the database by content hash
 
         Searches for previously processed resumes to enable caching
@@ -57,7 +63,8 @@ class ResumeEngine:
         existing_resume = await ResumeDB.find_one({"content_hash": content_hash})
         return existing_resume
 
-    async def _save_resume(self, document_chunk: DocumentChunk, resume_data: ResumeData):
+    @classmethod
+    async def _save_resume(cls, document_chunk: DocumentChunk, resume_data: ResumeData, source: SourceType, source_url: Optional[HttpUrl] = None):
         """💾 Save a new resume to the database
 
         Creates a new resume record with both raw content and
@@ -70,15 +77,15 @@ class ResumeEngine:
         new_resume = ResumeDB(
             content_hash=document_chunk.content_hash,
             name=document_chunk.file_name,
-            type="file",
+            type=source,
+            url=source_url,
             text_content=document_chunk.raw_text,
-            parsed_data=resume_data.model_dump(),
-            status="ready"
+            parsed_data=resume_data,
         )
         await new_resume.save_document()
         logger.info(f"Created new resume {new_resume.id}")
 
-    async def _process_document_chunk(self, document_chunk: DocumentChunk):
+    async def _process_document_chunk(self, document_chunk: DocumentChunk, source: SourceType, source_url: Optional[HttpUrl] = None):
         """🔄 Process a document chunk into resume data
 
         Common processing logic for both file and URL sources:
@@ -93,7 +100,7 @@ class ResumeEngine:
             Structured resume data as a dictionary
         """
         existing_resume = await self._find_from_db(document_chunk.content_hash)
-        if existing_resume and existing_resume.status == "ready" and existing_resume.parsed_data:
+        if existing_resume and existing_resume.parsed_data:
             logger.info(
                 f"Cache hit: Found existing resume with hash {document_chunk.content_hash}")
             return existing_resume.parsed_data
@@ -108,7 +115,7 @@ class ResumeEngine:
             await existing_resume.save_document()
             logger.info(f"Updated existing resume {existing_resume.id}")
         else:
-            await self._save_resume(document_chunk, resume_data)
+            await self._save_resume(document_chunk, resume_data, source, source_url)
 
         return resume_data.model_dump()
 
@@ -126,9 +133,9 @@ class ResumeEngine:
             Structured resume data as a dictionary
         """
         document_chunk = await self.content_processor.process_file(file)
-        return await self._process_document_chunk(document_chunk)
+        return await self._process_document_chunk(document_chunk, "file", None)
 
-    async def from_url(self, url: str):
+    async def from_url(self, url: HttpUrl):
         """📄 Process a resume from a URL
 
         Handles the complete resume processing workflow for URLs:
@@ -141,5 +148,5 @@ class ResumeEngine:
         Returns:
             Structured resume data as a dictionary
         """
-        document_chunk = await self.content_processor.process_url(url)
-        return await self._process_document_chunk(document_chunk)
+        document_chunk = await self.content_processor.process_url()
+        return await self._process_document_chunk(document_chunk, "url", url)

@@ -54,8 +54,8 @@ class ResumeDB(BaseDocument):
     name: str
     """👤 Name of the resume or document"""
 
-    type: Literal["file", "link"]
-    """🔗 Source type of the resume (file upload or link)"""
+    type: Literal["file", "url"]
+    """🔗 Source type of the resume (file upload or url)"""
 
     url: Optional[HttpUrl] = None
     """🔗 URL source of the resume if type is 'link'"""
