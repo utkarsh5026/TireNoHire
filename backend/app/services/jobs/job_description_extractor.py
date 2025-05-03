@@ -3,28 +3,28 @@ from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate, ChatPromptTemplate
 from langchain.output_parsers import PydanticOutputParser
 from langchain.output_parsers import StructuredOutputParser, ResponseSchema
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type
+)
 from .models import JobData
 from loguru import logger
-
-JOB_DESCRITPTION_EXTRACTION_SYSTEM_PROMPT = """You are an expert job description analyzer with deep experience in HR and recruiting.
-            Your task is to extract structured information from a job description.
-            
-            Parsing guidelines:
-            1. Extract the job title, company, location, and job type if available.
-            2. For each requirement, determine its category (technical skill, soft skill, education, experience) and importance (1-10).
-            3. Identify which requirements are absolutely required vs. preferred.
-            4. Extract all responsibilities listed in the job description.
-            5. Identify any preferred qualifications that are not strict requirements.
-            6. Extract benefits, salary information, and industry if available.
-            
-            The output should be a valid JSON object that matches the specified schema.
-            """
+from .prompt import JOB_DESCRITPTION_EXTRACTION_SYSTEM_PROMPT
 
 
 class JobDescriptionExtractor:
     def __init__(self, model_name: str = "gpt-4"):
-        # Initialize different models for different tasks
+        """🤖 Initialize the job description extractor with LLM models
+
+        Sets up two LLM instances:
+        - Main LLM for parsing job descriptions
+        - Analysis LLM for more complex reasoning tasks
+
+        Args:
+            model_name: The OpenAI model to use (default: "gpt-4")
+        """
         self.llm = ChatOpenAI(
             model=model_name,
             temperature=0.1,
@@ -45,7 +45,24 @@ class JobDescriptionExtractor:
         retry=retry_if_exception_type(Exception)
     )
     async def parse_job_description(self, job_text: str) -> JobData:
-        """Extract structured information from job description using Pydantic parser"""
+        """📝 Extract structured information from job description
+
+        Uses a Pydantic parser to extract key elements:
+        - 🏢 Company and job details
+        - 🧠 Skills and requirements
+        - 📋 Responsibilities
+        - 🌟 Preferred qualifications
+        - 💰 Benefits
+
+        Args:
+            job_text: Raw text of the job description
+
+        Returns:
+            Structured JobData object with parsed information
+
+        Note:
+            Falls back to alternative parsing method if primary fails
+        """
         logger.info("Parsing job description with LLM")
 
         try:
@@ -81,12 +98,26 @@ class JobDescriptionExtractor:
             return parsed_result
         except Exception as e:
             logger.error(f"Error parsing job description: {str(e)}")
-            # If parsing as Pydantic model fails, try with ResponseSchema as fallback
             logger.info("Attempting fallback parsing method")
             return await self._parse_job_description_fallback(job_text)
 
     async def _parse_job_description_fallback(self, job_text: str) -> JobData:
-        """Fallback method for job description parsing using ResponseSchema"""
+        """🔄 Fallback method for job description parsing
+
+        Uses a simpler ResponseSchema approach when Pydantic parsing fails:
+        - 🧩 Breaks down extraction into simpler components
+        - 🛠️ Uses more direct prompting
+        - 🦺 Provides basic structure even if parsing partially fails
+
+        Args:
+            job_text: Raw text of the job description
+
+        Returns:
+            JobData object with best-effort parsed information
+
+        Note:
+            Returns minimal JobData with just description if all parsing fails
+        """
         response_schemas = [
             ResponseSchema(name="title", description="Job title"),
             ResponseSchema(name="company", description="Company name"),
@@ -132,7 +163,6 @@ class JobDescriptionExtractor:
             return parsed_result
         except Exception as e:
             logger.error(f"Error in fallback job parsing: {str(e)}")
-            # Return basic structure to avoid breaking the app
             return JobData(
                 title="Unknown Position",
                 company=None,
