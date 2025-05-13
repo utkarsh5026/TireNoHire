@@ -6,7 +6,7 @@ import { LandingPage } from "@/components/pages/LandingPage";
 import JobSeekerPage from "@/components/seeker/JobSeekerPage";
 import RecruiterPage from "@/components/pages/RecruiterPage";
 import JobDescriptionPage from "@/components/job/desciption/JobDescription";
-import ResumeDisplayPage from "@/components/resume/display/ResumeDisplay";
+import ResumeLoadDisplay from "@/components/resume/display/ResumeLoadDisplay";
 
 const App: React.FC = () => {
   useEffect(() => {
@@ -22,7 +22,7 @@ const App: React.FC = () => {
             <Route path="job-seeker" element={<JobSeekerPage />} />
             <Route path="recruiter" element={<RecruiterPage />} />
             <Route path="job" element={<JobDescriptionPage />} />
-            <Route path="resume" element={<ResumeDisplayPage />} />
+            <Route path="resume" element={<ResumeLoadDisplay />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
