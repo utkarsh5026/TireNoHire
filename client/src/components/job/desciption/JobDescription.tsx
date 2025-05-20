@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/tooltip";
 import RightSide from "./RightSide";
 import LeftSide from "./LeftSide";
-import { JobPosting } from "../hooks/use-job";
+import { JobPosting } from "../store/use-job-store";
 
 const JobDescriptionPage: React.FC<{ jobDescription: JobPosting }> = ({
   jobDescription,

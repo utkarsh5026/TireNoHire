@@ -1,22 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useJob } from "../hooks/use-job";
-import { FaSpinner, FaSearch, FaGlobe, FaRedo } from "react-icons/fa";
 import JobDescription from "./JobDescription";
-import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import JobInput from "./input/JobInput";
 import type { JobPosting } from "@/components/job/store/use-job-store";
-import { getJobSiteIcon } from "@/components/shared/icons";
 
 const JobUrlFetcher: React.FC = () => {
   const [url, setUrl] = useState("");
@@ -67,11 +55,6 @@ const JobUrlFetcher: React.FC = () => {
     );
   };
 
-  const resetForm = () => {
-    setJob(null);
-    setUrl("");
-  };
-
   // Animation variants
   const containerVariants = {
     hidden: { opacity: 0, y: 50 },
@@ -107,71 +90,7 @@ const JobUrlFetcher: React.FC = () => {
           />
         </motion.div>
       ) : (
-        <div className="space-y-6 w-full">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            <Card className="shadow-md">
-              <CardContent className="pt-6">
-                <form onSubmit={handleSubmit} className="flex gap-2">
-                  <div className="relative flex-1">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                      {url ? (
-                        getJobSiteIcon(url)
-                      ) : (
-                        <FaGlobe className="h-4 w-4" />
-                      )}
-                    </div>
-                    <Input
-                      value={url}
-                      onChange={(e) => setUrl(e.target.value)}
-                      placeholder="Enter job posting URL"
-                      disabled={isProcessingUrl}
-                      className="pl-9"
-                    />
-                  </div>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={resetForm}
-                          disabled={isProcessingUrl}
-                        >
-                          <FaRedo className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Start new analysis</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <Button type="submit" disabled={!url || isProcessingUrl}>
-                    {isProcessingUrl ? (
-                      <>
-                        <FaSpinner className="mr-2 h-4 w-4 animate-spin" />{" "}
-                        Fetching
-                      </>
-                    ) : (
-                      <>
-                        <FaSearch className="mr-2 h-4 w-4" /> Fetch Job
-                      </>
-                    )}
-                  </Button>
-                </form>
-
-                {isProcessingUrl && (
-                  <div className="mt-2">
-                    <Progress value={progress} className="h-1" />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
-
+        <div className="flex flex-col items-center justify-center w-full">
           <JobDescription jobDescription={job} />
         </div>
       )}
