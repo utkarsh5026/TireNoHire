@@ -9,10 +9,12 @@ import {
   FaGlobe,
   FaArrowRight,
   FaMagic,
-  FaExternalLinkAlt,
   FaHistory,
   FaRedo,
+  FaLinkedin,
 } from "react-icons/fa";
+import { SiIndeed, SiGlassdoor } from "react-icons/si";
+import { BsBuilding } from "react-icons/bs";
 import JobDescription from "./JobDescription";
 import {
   Card,
@@ -30,6 +32,37 @@ import {
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+
+// Component to detect job site from URL and display appropriate icon
+const JobSiteIcon: React.FC<{ url: string }> = ({ url }) => {
+  let Icon = FaGlobe;
+  let color = "currentColor";
+  const size = "h-4 w-4";
+
+  // Check URL patterns to determine job site
+  if (/linkedin\.com/i.test(url)) {
+    Icon = FaLinkedin;
+    color = "#0077B5"; // LinkedIn blue
+  } else if (/indeed\.com/i.test(url)) {
+    Icon = SiIndeed;
+    color = "#003A9B"; // Indeed blue
+  } else if (/glassdoor\.(com|co)/i.test(url)) {
+    Icon = SiGlassdoor;
+    color = "#0CAA41"; // Glassdoor green
+  } else if (/ziprecruiter\.com/i.test(url)) {
+    Icon = FaGlobe; // Using generic globe for ZipRecruiter
+    color = "#5C6BC0"; // ZipRecruiter blue
+  } else if (/(careers|jobs)\.[\w.]+\.(com|org|net)/i.test(url)) {
+    Icon = BsBuilding;
+    color = "#4A5568"; // Company site - neutral color
+  }
+
+  return (
+    <span style={{ color }}>
+      <Icon className={size} />
+    </span>
+  );
+};
 
 const JobUrlFetcher: React.FC = () => {
   const [url, setUrl] = useState("");
@@ -164,7 +197,11 @@ const JobUrlFetcher: React.FC = () => {
               >
                 <div className="relative">
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    <FaGlobe className="h-5 w-5" />
+                    {url ? (
+                      <JobSiteIcon url={url} />
+                    ) : (
+                      <FaGlobe className="h-5 w-5" />
+                    )}
                   </div>
                   <Input
                     value={url}
@@ -209,10 +246,7 @@ const JobUrlFetcher: React.FC = () => {
                               className="px-3 py-2 hover:bg-muted cursor-pointer text-sm flex items-center gap-2 truncate"
                               onClick={() => selectRecentUrl(recentUrl)}
                             >
-                              <FaExternalLinkAlt
-                                size={10}
-                                className="text-muted-foreground flex-shrink-0"
-                              />
+                              <JobSiteIcon url={recentUrl} />
                               <span className="truncate">{recentUrl}</span>
                             </div>
                           ))}
@@ -258,19 +292,39 @@ const JobUrlFetcher: React.FC = () => {
 
                 <div className="flex justify-center">
                   <div className="inline-flex gap-2 flex-wrap justify-center">
-                    <Badge variant="outline" className="bg-primary/5">
+                    <Badge
+                      variant="outline"
+                      className="bg-primary/5 flex items-center gap-1"
+                    >
+                      <FaLinkedin size={10} color="#0077B5" />
                       LinkedIn
                     </Badge>
-                    <Badge variant="outline" className="bg-primary/5">
+                    <Badge
+                      variant="outline"
+                      className="bg-primary/5 flex items-center gap-1"
+                    >
+                      <SiIndeed size={10} color="#003A9B" />
                       Indeed
                     </Badge>
-                    <Badge variant="outline" className="bg-primary/5">
+                    <Badge
+                      variant="outline"
+                      className="bg-primary/5 flex items-center gap-1"
+                    >
+                      <SiGlassdoor size={10} color="#0CAA41" />
                       Glassdoor
                     </Badge>
-                    <Badge variant="outline" className="bg-primary/5">
+                    <Badge
+                      variant="outline"
+                      className="bg-primary/5 flex items-center gap-1"
+                    >
+                      <FaGlobe size={10} color="#5C6BC0" />
                       ZipRecruiter
                     </Badge>
-                    <Badge variant="outline" className="bg-primary/5">
+                    <Badge
+                      variant="outline"
+                      className="bg-primary/5 flex items-center gap-1"
+                    >
+                      <BsBuilding size={10} />
                       Company Sites
                     </Badge>
                   </div>
@@ -305,7 +359,11 @@ const JobUrlFetcher: React.FC = () => {
                 <form onSubmit={handleSubmit} className="flex gap-2">
                   <div className="relative flex-1">
                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                      <FaGlobe className="h-4 w-4" />
+                      {url ? (
+                        <JobSiteIcon url={url} />
+                      ) : (
+                        <FaGlobe className="h-4 w-4" />
+                      )}
                     </div>
                     <Input
                       value={url}
