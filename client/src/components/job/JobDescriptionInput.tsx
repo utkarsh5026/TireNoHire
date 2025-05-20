@@ -1,4 +1,3 @@
-// src/components/job/JobDescriptionInput.tsx
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
@@ -296,5 +295,3 @@ export const JobDescriptionInput: React.FC<JobDescriptionInputProps> = ({
     </div>
   );
 };
-
-// src/components/job/JobRequirementsList.tsx

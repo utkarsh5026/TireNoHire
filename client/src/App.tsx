@@ -5,7 +5,7 @@ import { AppLayout } from "@/components/pages/Applayout";
 import { LandingPage } from "@/components/pages/LandingPage";
 import JobSeekerPage from "@/components/seeker/JobSeekerPage";
 import RecruiterPage from "@/components/pages/RecruiterPage";
-import JobDescriptionPage from "@/components/job/desciption/JobDescription";
+import JobUrlFetcher from "@/components/job/desciption/JobUrlFetcher";
 import ResumeLoadDisplay from "@/components/resume/display/ResumeLoadDisplay";
 
 const App: React.FC = () => {
@@ -21,13 +21,13 @@ const App: React.FC = () => {
             <Route index element={<LandingPage />} />
             <Route path="job-seeker" element={<JobSeekerPage />} />
             <Route path="recruiter" element={<RecruiterPage />} />
-            <Route path="job" element={<JobDescriptionPage />} />
+            <Route path="job" element={<JobUrlFetcher />} />
             <Route path="resume" element={<ResumeLoadDisplay />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
       </BrowserRouter>
-      <Toaster />
+      <Toaster richColors />
     </>
   );
 };

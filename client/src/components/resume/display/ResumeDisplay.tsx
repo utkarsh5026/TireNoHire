@@ -29,7 +29,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 // Mock data following the Pydantic model structure
 const mockResumeData = {
@@ -335,15 +334,6 @@ const ResumeDisplayPage: React.FC = () => {
         {/* Contact Info Header */}
         <div className="bg-primary/5 p-8 border-b">
           <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
-            <Avatar className="h-24 w-24 border-4 border-background">
-              <AvatarFallback className="text-3xl bg-primary/20">
-                {contact_info.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
-              </AvatarFallback>
-            </Avatar>
-
             <div className="flex-1 text-center md:text-left">
               <h1 className="text-3xl font-bold tracking-tight">
                 {contact_info.name}

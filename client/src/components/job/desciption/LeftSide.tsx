@@ -26,10 +26,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import type { JobDescription, JobRequirements } from "@/types/job";
+import type { JobRequirements } from "@/types/job";
+import { JobPosting } from "../hooks/use-job";
 
 interface LeftSideProps {
-  jobDescription: JobDescription;
+  jobDescription: JobPosting;
 }
 
 const groupRequirementsByCategory = (requirements: JobRequirements[]) => {

@@ -10,10 +10,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import type { JobDescription } from "@/types/job";
+import type { JobPosting } from "../hooks/use-job";
 
 interface RightSideProps {
-  jobDescription: JobDescription;
+  jobDescription: JobPosting;
 }
 
 const RightSide: React.FC<RightSideProps> = ({ jobDescription }) => {
