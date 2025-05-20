@@ -42,6 +42,7 @@ import {
   FaTools,
   FaUsers,
   FaWrench,
+  FaLinkedin,
 } from "react-icons/fa";
 import {
   SiTypescript,
@@ -59,8 +60,12 @@ import {
   SiPostgresql,
   SiRedis,
   SiKubernetes,
+  SiIndeed,
+  SiGlassdoor,
 } from "react-icons/si";
 import { TbBrandCSharp } from "react-icons/tb";
+import { BsBuilding } from "react-icons/bs";
+import { ReactNode } from "react";
 
 export const getSkillIcon = (skill: string) => {
   const lowerSkill = skill.toLowerCase();
@@ -257,5 +262,22 @@ export const getCategoryIcon = (category: string) => {
       return <FaTerminal size={16} />;
     default:
       return <FaLayerGroup size={16} />;
+  }
+};
+
+export const getJobSiteIcon = (url: string): ReactNode => {
+  switch (true) {
+    case /linkedin\.com/i.test(url):
+      return <FaLinkedin size={16} className="text-blue-500" />;
+    case /indeed\.com/i.test(url):
+      return <SiIndeed size={16} className="text-blue-800" />;
+    case /glassdoor\.(com|co)/i.test(url):
+      return <SiGlassdoor size={16} className="text-green-800" />;
+    case /ziprecruiter\.com/i.test(url):
+      return <FaGlobe size={16} className="text-gray-800" />;
+    case /(careers|jobs)\.[\w.]+\.(com|org|net)/i.test(url):
+      return <BsBuilding size={16} className="text-gray-800" />;
+    default:
+      return <FaGlobe size={16} />;
   }
 };
