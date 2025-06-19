@@ -21,7 +21,7 @@ const App: React.FC = () => {
             <Route index element={<LandingPage />} />
             <Route path="job-seeker" element={<JobSeekerPage />} />
             <Route path="recruiter" element={<RecruiterPage />} />
-            <Route path="job" element={<JobUrlFetcher />} />
+            <Route path="job*" element={<JobUrlFetcher />} />
             <Route path="resume" element={<ResumeLoadDisplay />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

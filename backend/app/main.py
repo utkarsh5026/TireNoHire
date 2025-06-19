@@ -3,13 +3,24 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import api_router
 from loguru import logger
 import time
+from contextlib import asynccontextmanager
 from app.db import connect_to_mongo, close_mongo_connection
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await connect_to_mongo()
+    yield
+    # Shutdown
+    await close_mongo_connection()
 
 
 app = FastAPI(
     title="Resume Match API",
     description="API for matching resumes with job descriptions",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 
@@ -41,6 +52,7 @@ async def log_requests(request: Request, call_next):
 
     return response
 
+
 # Connect to MongoDB on startup
 
 
@@ -55,7 +67,6 @@ async def shutdown_db_client():
 
 
 app.include_router(api_router, prefix="/api")
-print("HELLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
 
 
 @app.get("/")

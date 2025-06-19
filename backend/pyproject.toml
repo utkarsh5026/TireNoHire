@@ -24,6 +24,7 @@ pypdf = "^5.4.0"
 unstructured = "^0.17.2"
 beanie = "^1.29.0"
 redis = "^6.0.0"
+google-adk = "^1.4.1"
 
 
 [tool.poetry.group.dev.dependencies]

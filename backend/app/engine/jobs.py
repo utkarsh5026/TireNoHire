@@ -206,14 +206,10 @@ class JobEngine:
         Returns:
             Structured job data as a dictionary
         """
-        # Initialize document chunk from text
         from hashlib import sha256
         content_hash = sha256(text.encode('utf-8')).hexdigest()
-
-        # Process text through content processor for standardized chunking
         raw_chunk = await self.content_processor.process_text(text)
 
-        # Create a document chunk with the job title as filename
         document_chunk = DocumentChunk(
             content_hash=content_hash,
             raw_text=raw_chunk.raw_text,

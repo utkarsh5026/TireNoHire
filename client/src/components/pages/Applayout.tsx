@@ -1,6 +1,15 @@
 import React from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 export const AppLayout: React.FC = () => {
+  const location = useLocation();
+
+  console.log({
+    pathname: location.pathname, // "/job-seeker"
+    search: location.search, // "?tab=upload&step=1"
+    hash: location.hash, // "#section1"
+    state: location.state, // state passed via navigation
+    key: location.key, // unique key for this location
+  });
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <header className="border-b">

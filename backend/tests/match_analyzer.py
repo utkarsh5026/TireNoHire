@@ -1,6 +1,6 @@
 import pytest
-services.match_analyzer import MatchAnalyzer
-models.match import MatchAnalysis
+from app.services.match_analyzer import MatchAnalyzer
+from app.models.match import MatchAnalysis
 
 
 @pytest.mark.asyncio
