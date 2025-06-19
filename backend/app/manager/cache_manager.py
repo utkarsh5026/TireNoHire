@@ -25,7 +25,6 @@ class CacheManager:
         self._memory_cache: Dict[str, Dict[str, Any]] = {}
         self._default_ttl = ttl
 
-        # Initialize Redis connection if configured
         self._redis = None
         if settings.REDIS_URL:
             try:

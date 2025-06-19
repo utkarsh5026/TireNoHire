@@ -28,9 +28,9 @@ RESUME_EXTRACTOR_SYSTEM_PROMPT = """You are an expert resume parser with deep ex
 class ResumeExtractor:
     def __init__(self, model_name: str = "gpt-4o-mini"):
         self.llm = ChatOpenAI(
-            model_name=model_name,
+            name=model_name,
             temperature=0.1,
-            request_timeout=60,
+            timeout=50
         )
 
         logger.info(f"Initialized LLM service with model: {model_name}")
@@ -120,14 +120,14 @@ class ResumeExtractor:
         chain = prompt | self.llm | parser
 
         try:
-            result = await chain.arun(resume_text=resume_text)
-            parsed_result = parser.parse(result)
+            result = await chain.ainvoke({"resume_text": resume_text})
             logger.info("Successfully parsed resume with fallback method")
-            return parsed_result
+            return ResumeData.model_validate(result)
         except Exception as e:
             logger.error(f"Error in fallback resume parsing: {str(e)}")
+            from .models import ContactInfo
             return ResumeData(
-                contact_info={},
+                contact_info=ContactInfo(),
                 education=[],
                 experience=[],
                 skills=[],
